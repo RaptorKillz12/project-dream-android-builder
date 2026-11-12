@@ -13,9 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
+        with:
+          # The legacy SDK package 'tools' was removed. Install only platform-tools.
+          packages: 'platform-tools'
       - name: Install native build tools
-        run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
+        run: sdkmanager --install "ndk;27.2.12479018" "cmake;3.22.1"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
