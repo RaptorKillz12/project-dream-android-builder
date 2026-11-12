@@ -1,9 +1,18 @@
-# Project Dream Android Builder
+# Project Dream Android Compatibility Foundation
 
-Android setup prototype for inspecting a user-provided SonicDreamTeam.app 1.10.1 folder.
+A native Android ARM64 foundation for investigating a Project Dream-style Unity compatibility runtime. The goal is to host/adapt the original macOS Unity game code where technically and legally possible, not remake Sonic Dream Team or translate its gameplay source into another engine.
 
-## Status: prototype only
+## Current milestone: 0.2.0-compat
+- Android folder picker for the user's own SonicDreamTeam.app contents.
+- Native C++ JNI library built for arm64-v8a.
+- Thin Mach-O header identification and CPU architecture report.
+- Universal/FAT Mach-O signature detection.
+- Compatibility architecture roadmap in native/compatibility-roadmap.md.
 
-This project does not yet convert the macOS game into an Android APK. A real port needs an independently implemented ARM64 runtime, platform compatibility layer, Unity player integration, shader translation, and packaging pipeline.
+## Important status
+This is not yet a playable port. It does not load or execute GameAssembly.dylib, implement macOS APIs or Objective-C/Foundation, run IL2CPP, integrate the matching Unity player, translate Metal shaders, or package a working game APK. Android uses ELF shared libraries; a macOS Mach-O dylib cannot be made loadable by renaming it. The actual binary architecture and imported dependencies must be inspected before choosing an execution/translation strategy.
 
-The first milestone is a source-folder checker and a GitHub Actions APK build. No proprietary game files are included.
+## Build
+GitHub Actions builds the Android setup/diagnostic APK. Open Actions, select the latest successful Build Android Setup APK run, and download the Project-Dream-Setup-debug artifact.
+
+No proprietary game binaries, assets, or copyrighted game data are stored in this repository.
