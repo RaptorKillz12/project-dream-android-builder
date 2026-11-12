@@ -3,6 +3,7 @@ extends Control
 const STEPS := ["Welcome", "Game files", "Verification", "Components", "Configuration", "Build"]
 const ACCENT := Color("#56A9F5")
 const MUTED := Color("#A9B9CC")
+const MachOInspector = preload("res://macho_inspector.gd")
 var page := 0
 var source_path := ""
 var detected: Dictionary = {}
@@ -215,29 +216,43 @@ func _verify_source() -> void:
 	if source_path.is_empty():
 		detected["Folder"] = "Missing — select a folder first"
 	else:
-		detected["GameAssembly.dylib"] = "Found" if FileAccess.file_exists(source_path.path_join("GameAssembly.dylib")) else "Not found at selected folder root"
-		detected["global-metadata.dat"] = "Found" if _find_named_file(source_path, "global-metadata.dat") else "Not found"
-		detected["Info.plist"] = "Found" if FileAccess.file_exists(source_path.path_join("Info.plist")) else "Not found at selected folder root"
+		var assembly_path := _find_file_path(source_path, "GameAssembly.dylib")
+		var metadata_path := _find_file_path(source_path, "global-metadata.dat")
+		var plist_path := _find_file_path(source_path, "Info.plist")
+		detected["GameAssembly.dylib"] = assembly_path if assembly_path != "" else "Not found"
+		detected["global-metadata.dat"] = metadata_path if metadata_path != "" else "Not found"
+		detected["Info.plist"] = plist_path if plist_path != "" else "Not found"
 		detected["Source"] = source_path
-		detected["Assessment"] = "Presence check only; architecture and imports are not analyzed."
+		if assembly_path != "":
+			var binary_report: Dictionary = MachOInspector.inspect_file(assembly_path)
+			detected["Mach-O format"] = binary_report.get("format", "Unknown")
+			detected["CPU architecture"] = binary_report.get("architecture", "Unknown")
+			detected["Binary type"] = binary_report.get("file_type", "Unknown")
+			detected["Build platform"] = binary_report.get("platform", "Not specified")
+			detected["Linked libraries"] = ", ".join(binary_report.get("dependencies", []))
+			if not binary_report.get("valid", false):
+				detected["Mach-O inspection"] = binary_report.get("error", "Inspection failed")
+		detected["Assessment"] = "Static header and dependency inspection only. This does not make the macOS binary executable on Android."
 	_draw_page()
 
-func _find_named_file(path: String, wanted: String) -> bool:
+func _find_file_path(path: String, wanted: String) -> String:
 	var dir := DirAccess.open(path)
 	if dir == null:
-		return false
+		return ""
 	dir.list_dir_begin()
 	var name := dir.get_next()
 	while name != "":
 		if name == wanted and not dir.current_is_dir():
 			dir.list_dir_end()
-			return true
-		if dir.current_is_dir() and name != "." and name != ".." and _find_named_file(path.path_join(name), wanted):
-			dir.list_dir_end()
-			return true
+			return path.path_join(name)
+		if dir.current_is_dir() and name != "." and name != "..":
+			var found := _find_file_path(path.path_join(name), wanted)
+			if found != "":
+				dir.list_dir_end()
+				return found
 		name = dir.get_next()
 	dir.list_dir_end()
-	return false
+	return ""
 
 func _generate_plan() -> void:
 	var plan := {"product":"Project Dream Android Setup","plan_version":1,"source_folder":source_path,"target":"android-arm64","renderer":renderer,"detected_files":detected,"components":component_checks,"status":"configuration_only_runtime_not_implemented"}
