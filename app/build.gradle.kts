@@ -26,3 +26,9 @@ android {
         jvmTarget = "17"
     }
 }
+
+dependencies {
+    // Provides DocumentFile.fromTreeUri(), isDirectory, and listFiles()
+    // for Android's Storage Access Framework folder picker.
+    implementation("androidx.documentfile:documentfile:1.0.1")
+}
