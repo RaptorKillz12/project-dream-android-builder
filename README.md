@@ -1,18 +1,31 @@
-# Project Dream Android Compatibility Foundation
+# Project Dream Compatibility Installer
 
-A native Android ARM64 foundation for investigating a Project Dream-style Unity compatibility runtime. The goal is to host/adapt the original macOS Unity game code where technically and legally possible, not remake Sonic Dream Team or translate its gameplay source into another engine.
+This project is being developed as a Project Dream-style Unity compatibility installer, not as a game remake or a source-code conversion.
 
-## Current milestone: 0.2.0-compat
-- Android folder picker for the user's own SonicDreamTeam.app contents.
-- Native C++ JNI library built for arm64-v8a.
-- Thin Mach-O header identification and CPU architecture report.
-- Universal/FAT Mach-O signature detection.
-- Compatibility architecture roadmap in native/compatibility-roadmap.md.
+## Installer interface added
+- Select the original macOS Unity game's Contents folder.
+- Inspect GameAssembly.dylib's Mach-O header and report its CPU architecture.
+- Select Windows x64 and/or Android ARM64 as build targets.
+- Select Windows DirectX 11/Vulkan and Android Vulkan/OpenGL ES 3 renderer profiles.
+- Select installer modules: MelonLoader integration, GamePatches, graphics settings, display options, accessibility, achievements, gameplay modifications, and mod support.
+- Generate a local build profile summary.
 
-## Important status
-This is not yet a playable port. It does not load or execute GameAssembly.dylib, implement macOS APIs or Objective-C/Foundation, run IL2CPP, integrate the matching Unity player, translate Metal shaders, or package a working game APK. Android uses ELF shared libraries; a macOS Mach-O dylib cannot be made loadable by renaming it. The actual binary architecture and imported dependencies must be inspected before choosing an execution/translation strategy.
+## Compatibility engine status
+The interface and profile selection are scaffolding only. The selected runtime modules are not implemented yet, and profile generation does not create a playable game build.
+
+Still required:
+1. Full Mach-O/fat-binary parsing and imported-symbol/dependency inventory.
+2. A viable binary execution or translation strategy for the macOS ARM64 game code.
+3. macOS/POSIX, libSystem, Objective-C runtime, Foundation, threading, filesystem, and exception compatibility.
+4. Unity/IL2CPP runtime and native plugin integration.
+5. Metal-to-Vulkan/OpenGL ES graphics translation, including shader/resource handling.
+6. Windows host and Android ARM64 host/player integration.
+7. Real MelonLoader/GamePatches integration and mod APIs.
+8. Platform packaging: Windows distribution and Android APK/split APK plus game data.
+
+A Mach-O dylib is not an Android ELF shared library. Renaming GameAssembly.dylib to GameAssembly.so will not make it executable. The original player and its platform-specific dependencies must also be handled.
 
 ## Build
-GitHub Actions builds the Android setup/diagnostic APK. Open Actions, select the latest successful Build Android Setup APK run, and download the Project-Dream-Setup-debug artifact.
+GitHub Actions builds the Android installer interface APK. Download the Project-Dream-Setup-debug artifact from a successful workflow run.
 
-No proprietary game binaries, assets, or copyrighted game data are stored in this repository.
+The repository does not include proprietary game binaries or game assets.
