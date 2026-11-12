@@ -13,6 +13,7 @@ import androidx.documentfile.provider.DocumentFile
 
 class MainActivity : Activity() {
     private lateinit var status: TextView
+    private external fun nativeInspectMachO(header: ByteArray): String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,13 +25,13 @@ class MainActivity : Activity() {
         }
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(label("PROJECT DREAM", 27, 0xFFFFFFFF.toInt(), true))
-        content.addView(label("ANDROID SETUP • PROTOTYPE 0.1.0", 13, 0xFF62D5FA.toInt(), true))
+        content.addView(label("UNITY COMPATIBILITY LAYER • FOUNDATION 0.2.0", 13, 0xFF62D5FA.toInt(), true))
         content.addView(label(
-            "Select the Contents folder inside your own SonicDreamTeam.app version 1.10.1.",
+            "Select the Contents folder inside your own SonicDreamTeam.app 1.10.1. This build starts a native ARM64 compatibility foundation; it does not recompile or remake the game.",
             16, 0xFFE5E7EB.toInt()
         ))
         val choose = Button(this).apply {
-            text = "SELECT CONTENTS FOLDER"
+            text = "SELECT MAC GAME CONTENTS"
             setOnClickListener {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -40,12 +41,17 @@ class MainActivity : Activity() {
             }
         }
         content.addView(choose)
-        status = label("No folder selected.", 15, 0xFFFFD166.toInt())
+        status = label("No source folder selected.", 15, 0xFFFFD166.toInt())
         content.addView(status)
         content.addView(label(
-            "THIS BUILD CAN\n• Select a folder using Android's file picker\n• Scan for key source files\n• Report what was found\n\n" +
-            "THIS BUILD CANNOT YET\n• Convert the macOS game\n• Generate a playable game APK/OBB\n\n" +
-            "The conversion runtime is not included. The original Project Dream Windows executable cannot simply be repackaged as Android code.",
+            "COMPATIBILITY ENGINE ROADMAP\n" +
+            "1  Mach-O / ARM64 binary inspection — implemented\n" +
+            "2  macOS API compatibility shims — scaffold\n" +
+            "3  IL2CPP ABI and runtime bridge — not implemented\n" +
+            "4  Unity player / asset integration — not implemented\n" +
+            "5  Metal-to-Vulkan / OpenGL ES renderer — not implemented\n" +
+            "6  Android APK + game data packaging — not implemented\n\n" +
+            "IMPORTANT\nThe original GameAssembly.dylib is a macOS Mach-O binary. Android cannot load it as an ELF .so. A real compatibility runtime must translate or host its binary format and provide the missing macOS/Unity interfaces. This app currently diagnoses the input and builds the native ARM64 foundation only.",
             14, 0xFFE5E7EB.toInt()
         ))
         val scroll = ScrollView(this).apply { addView(content) }
@@ -70,27 +76,53 @@ class MainActivity : Activity() {
             status.text = "Could not read that folder. Select SonicDreamTeam.app/Contents."
             return
         }
+
         val found = mutableSetOf<String>()
         scan(folder, found, 0)
+        val gameAssembly = findFile(folder, "GameAssembly.dylib", 0)
+        val binaryReport = if (gameAssembly != null) {
+            try {
+                val header = contentResolver.openInputStream(gameAssembly.uri)?.use { it.readNBytes(64) }
+                if (header == null) "Unable to read binary header."
+                else nativeInspectMachO(header)
+            } catch (error: Exception) {
+                "Binary inspection failed: ${error.message ?: "unknown error"}"
+            }
+        } else {
+            "GameAssembly.dylib not found."
+        }
+
         val checks = listOf("Info.plist", "GameAssembly.dylib", "global-metadata.dat")
         status.text = buildString {
-            append("SOURCE FILE REPORT\n")
+            append("MAC SOURCE ANALYSIS\n")
             checks.forEach { append(it).append(": ").append(if (it in found) "FOUND" else "NOT FOUND").append('\n') }
-            append("\n")
-            append(if (checks.all { it in found }) {
-                "All expected marker files found. This is only a source check, not a conversion."
-            } else {
-                "Some marker files are missing. Verify that you selected the app's Contents folder and that this is the macOS build."
-            })
+            append("\nNATIVE BINARY CHECK\n").append(binaryReport)
+            append("\n\nENGINE STATUS\n")
+            append("ARM64 Android native bridge: BUILT-IN\n")
+            append("macOS API compatibility: NOT IMPLEMENTED\n")
+            append("IL2CPP execution: NOT IMPLEMENTED\n")
+            append("Unity rendering: NOT IMPLEMENTED\n")
+            append("\nThis is a compatibility diagnostic, not a playable port.")
         }
     }
 
     private fun scan(dir: DocumentFile, found: MutableSet<String>, depth: Int) {
-        if (depth > 10 || found.size > 25000) return
+        if (depth > 12 || found.size > 25000) return
         for (entry in dir.listFiles()) {
             if (entry.isDirectory) scan(entry, found, depth + 1)
             else entry.name?.let { found.add(it) }
         }
+    }
+
+    private fun findFile(dir: DocumentFile, wanted: String, depth: Int): DocumentFile? {
+        if (depth > 12) return null
+        for (entry in dir.listFiles()) {
+            if (entry.isDirectory) {
+                val match = findFile(entry, wanted, depth + 1)
+                if (match != null) return match
+            } else if (entry.name == wanted) return entry
+        }
+        return null
     }
 
     private fun label(value: String, size: Int, color: Int, bold: Boolean = false) =
@@ -102,5 +134,8 @@ class MainActivity : Activity() {
             setPadding(0, 12, 0, 12)
         }
 
-    companion object { private const val PICK_FOLDER = 4102 }
+    companion object {
+        private const val PICK_FOLDER = 4102
+        init { System.loadLibrary("dreamcompat") }
+    }
 }
