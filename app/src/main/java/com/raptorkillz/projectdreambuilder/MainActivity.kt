@@ -26,6 +26,7 @@ class MainActivity : Activity() {
     private var sourceFiles = emptySet<String>()
     private var gameAssemblyReport = "Not inspected"
     private external fun nativeInspectMachO(header: ByteArray): String
+    private external fun nativeInspectMachOFile(path: String): String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -153,12 +154,27 @@ class MainActivity : Activity() {
             "GameAssembly.dylib not found."
         } else {
             try {
-                val header = contentResolver.openInputStream(assembly.uri)?.use { input ->
-                    val buffer = ByteArray(64)
-                    val count = input.read(buffer)
-                    if (count <= 0) ByteArray(0) else buffer.copyOf(count)
+                val temp = java.io.File(cacheDir, "GameAssembly-inspection.dylib")
+                contentResolver.openInputStream(assembly.uri)?.use { input ->
+                    temp.outputStream().use { output ->
+                        val buffer = ByteArray(1024 * 1024)
+                        var total = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            total += count
+                            if (total > 1024L * 1024L * 1024L) {
+                                throw IllegalStateException("Binary exceeds the 1 GiB inspection limit.")
+                            }
+                            output.write(buffer, 0, count)
+                        }
+                    }
+                } ?: throw IllegalStateException("Could not open GameAssembly.dylib.")
+                try {
+                    nativeInspectMachOFile(temp.absolutePath)
+                } finally {
+                    temp.delete()
                 }
-                if (header == null) "Could not read the Mach-O header." else nativeInspectMachO(header)
             } catch (e: Exception) {
                 "Inspection error: ${e.message ?: "unknown"}"
             }
