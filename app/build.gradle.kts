@@ -11,12 +11,20 @@ android {
         applicationId = "com.raptorkillz.projectdreambuilder"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0-compat"
+
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
     }
 
-    // Keep Java and Kotlin bytecode targets aligned with the JDK 17
-    // configured in the GitHub Actions workflow.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -25,10 +33,15 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
 dependencies {
-    // Provides DocumentFile.fromTreeUri(), isDirectory, and listFiles()
-    // for Android's Storage Access Framework folder picker.
     implementation("androidx.documentfile:documentfile:1.0.1")
 }
