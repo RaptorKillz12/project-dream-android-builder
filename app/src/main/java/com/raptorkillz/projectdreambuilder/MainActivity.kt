@@ -82,7 +82,11 @@ class MainActivity : Activity() {
         val gameAssembly = findFile(folder, "GameAssembly.dylib", 0)
         val binaryReport = if (gameAssembly != null) {
             try {
-                val header = contentResolver.openInputStream(gameAssembly.uri)?.use { input ->\n                    val buffer = ByteArray(64)\n                    val count = input.read(buffer)\n                    if (count <= 0) ByteArray(0) else buffer.copyOf(count)\n                }
+                val header = contentResolver.openInputStream(gameAssembly.uri)?.use { input ->
+                    val buffer = ByteArray(64)
+                    val count = input.read(buffer)
+                    if (count <= 0) ByteArray(0) else buffer.copyOf(count)
+                }
                 if (header == null) "Unable to read binary header."
                 else nativeInspectMachO(header)
             } catch (error: Exception) {
