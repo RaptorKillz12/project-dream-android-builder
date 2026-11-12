@@ -1,29 +1,29 @@
-# Project Dream Compatibility Installer
+# Project Dream Android Compatibility Installer
 
-This project is being developed as a Project Dream-style Unity compatibility installer, not as a game remake or source-code conversion.
+This repository contains an Android-only Project Dream-style installer project. It is intended to preserve the original game's code and data rather than remake the game in Godot.
 
-## Installer interface
-- Select original macOS Unity game's Contents folder.
-- Inspect GameAssembly.dylib's Mach-O header and metadata.
-- Select Windows x64 and/or Android ARM64 targets.
-- Select Windows DirectX 11/Vulkan and Android Vulkan/OpenGL ES 3 profiles.
-- Select MelonLoader/GamePatches, graphics, display, accessibility, achievements, gameplay modifications, and mod-support options.
-- Generate a local build profile summary.
+## Godot installer project
 
-## Native compatibility foundation implemented
-- Android ARM64 JNI shared library.
-- Thin Mach-O header and architecture recognition.
-- Thin 64-bit Mach-O load-command traversal.
-- Build target platform identification where LC_BUILD_VERSION is present.
-- Linked dylib/framework dependency-name enumeration.
-- Android installer copies the selected GameAssembly.dylib to app cache for static inspection.
+The current Godot 4.7.2 project is in [godot/](godot/).
 
-See [native/compatibility-roadmap.md](native/compatibility-roadmap.md) for milestones and [native/README.md](native/README.md) for subsystem design notes.
+- Multi-step PC-installer-style setup wizard.
+- Select the original game Contents directory.
+- Recursively locate `GameAssembly.dylib`, `global-metadata.dat` and `Info.plist`.
+- Inspect supported thin 64-bit Mach-O headers, CPU architecture, file type, build platform and linked dylib names.
+- Select compatibility components and Android ARM64 graphics preferences.
+- Generate a JSON build-plan file.
+- Export workflow: [Build Godot Project Dream Android APK](.github/workflows/godot-android.yml).
 
-## Not implemented yet
-The repository does not yet contain a Mach-O memory mapper/relocator/dyld, macOS POSIX/libSystem or Objective-C/Foundation compatibility, an IL2CPP execution bridge, a Unity player, Metal-to-Vulkan/OpenGL ES translation, a Windows host, actual MelonLoader/GamePatches runtime integration, or playable game packaging. The installer currently creates a configuration summary only. A Mach-O dylib is not an Android ELF shared object and cannot be loaded by renaming it.
+## Native compatibility foundation
+
+The earlier native Android prototype remains in `app/` and includes JNI-based thin Mach-O inspection. The Godot GDScript inspector is a separate static-inspection implementation. See [native/ANDROID_RUNTIME_ARCHITECTURE.md](native/ANDROID_RUNTIME_ARCHITECTURE.md) and [native/compatibility-roadmap.md](native/compatibility-roadmap.md).
+
+## Important status
+
+The installer UI, basic source-file detection and limited static Mach-O inspection are implemented. **The actual compatibility runtime is not implemented.** This repository does not yet execute macOS Mach-O code on Android, provide macOS/POSIX or Objective-C/Foundation compatibility, bridge the original IL2CPP runtime, provide a compatible Unity player, translate Metal rendering, or produce a playable Sonic Dream Team APK.
+
+A macOS Mach-O binary is not an Android ELF library. Renaming it to `.so` does not make it runnable. The original game files must be supplied by the user; proprietary game binaries and assets are not stored here.
 
 ## Build
-GitHub Actions builds the Android installer/diagnostic APK. Download the Project-Dream-Setup-debug artifact from a successful workflow run.
 
-No proprietary game binaries or game assets are stored in this repository.
+Open `godot/project.godot` with Godot 4.7.2. For automated Android export, run the **Build Godot Project Dream Android APK** workflow and download its artifact only after the workflow succeeds.
