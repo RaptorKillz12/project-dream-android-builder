@@ -229,7 +229,7 @@ func _verify_source() -> void:
 			detected["CPU architecture"] = binary_report.get("architecture", "Unknown")
 			detected["Binary type"] = binary_report.get("file_type", "Unknown")
 			detected["Build platform"] = binary_report.get("platform", "Not specified")
-			detected["Linked libraries"] = ", ".join(binary_report.get("dependencies", []))
+			detected["Linked libraries"] = str(binary_report.get("dependencies", []))
 			if not binary_report.get("valid", false):
 				detected["Mach-O inspection"] = binary_report.get("error", "Inspection failed")
 		detected["Assessment"] = "Static header and dependency inspection only. This does not make the macOS binary executable on Android."
