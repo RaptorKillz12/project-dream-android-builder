@@ -55,7 +55,6 @@ static func inspect_file(path: String) -> Dictionary:
 					name_bytes = name_bytes.slice(0, zero)
 				result.dependencies.append(name_bytes.get_string_from_utf8())
 		elif command == LC_BUILD_VERSION and size >= 24:
-			file.get_32()
 			var platform := file.get_32()
 			result.platform = _platform_name(platform)
 		file.seek(command_base + size)
